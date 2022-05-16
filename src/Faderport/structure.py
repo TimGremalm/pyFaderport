@@ -192,11 +192,9 @@ class FaderportControls:
         # self.add_control_button(btn=Button(name="left_tap_tempo", faderport=faderport,
         #                                    midi_type=MIDIType.ControlChange,
         #                                    midi_id=3, luminance_type=LightTypes.Yellow))
-        # Knobs
+        # Left Knob
         self.add_control_knob(knob=Knob(name="left_knob", faderport=faderport,
                                         midi_touch=32, midi_rotate=16))
-        self.add_control_knob(knob=Knob(name="navigate_knob", faderport=faderport,
-                                        midi_touch=83, midi_rotate=60))
         # Left buttons
         self.add_control_button(btn=Button(name="left_arm", faderport=faderport,
                                            midi_type=MIDIType.Note,
@@ -219,6 +217,108 @@ class FaderportControls:
         self.add_control_button(btn=Button(name="left_shift", faderport=faderport,
                                            midi_type=MIDIType.Note,
                                            midi_id=70, luminance_type=LightTypes.Yellow))
+        # Right buttons
+        self.add_control_button(btn=Button(name="right_track", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=40, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="right_edit_plugins", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=43, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="right_sends", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=41, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="right_pan", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=42, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="right_audio", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=62, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="right_vi", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=63, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="right_bus", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=64, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="right_vca", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=65, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="right_all", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=66, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="right_shift", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=6, luminance_type=LightTypes.Yellow))
+        # Navigate Knob
+        self.add_control_knob(knob=Knob(name="navigate_knob", faderport=faderport,
+                                        midi_touch=83, midi_rotate=60))
+        # Navigate buttons
+        self.add_control_button(btn=Button(name="navigate_latch", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=78, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="navigate_trim", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=76, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="navigate_off", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=79, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="navigate_touch", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=77, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="navigate_write", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=75, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="navigate_read", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=74, luminance_type=LightTypes.RGB))
+        self.add_control_button(btn=Button(name="navigate_prev", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=46, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="navigate_next", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=47, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="navigate_channel", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=54, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="navigate_zoom", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=55, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="navigate_scroll", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=56, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="navigate_bank", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=57, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="navigate_master", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=58, luminance_type=LightTypes.Yellow))
+        self.add_control_button(btn=Button(name="navigate_click", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=59, luminance_type=LightTypes.Red))
+        self.add_control_button(btn=Button(name="navigate_section", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=60, luminance_type=LightTypes.Green))
+        self.add_control_button(btn=Button(name="navigate_marker", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=61, luminance_type=LightTypes.Green))
+        # Navigate buttons
+        self.add_control_button(btn=Button(name="transport_loop", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=86, luminance_type=LightTypes.Blue))
+        self.add_control_button(btn=Button(name="transport_rewind", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=91, luminance_type=LightTypes.Green))
+        self.add_control_button(btn=Button(name="transport_fast_forward", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=92, luminance_type=LightTypes.Green))
+        self.add_control_button(btn=Button(name="transport_stop", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=93, luminance_type=LightTypes.Yellow))
+        self.add_control_button(btn=Button(name="transport_play_pause", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=94, luminance_type=LightTypes.Green))
+        self.add_control_button(btn=Button(name="transport_record", faderport=faderport,
+                                           midi_type=MIDIType.Note,
+                                           midi_id=95, luminance_type=LightTypes.Red))
         # 8 columns with sliders and buttons
         for i in range(8):
             col = i + 1
