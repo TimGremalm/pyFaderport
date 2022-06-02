@@ -172,7 +172,7 @@ class Knob:
         self.midi_channel = 0
 
     def __repr__(self):
-        out = f"Know(name='{self.name}'"
+        out = f"Knob(name='{self.name}'"
         out += f", midi_touch={self.midi_touch}, midi_rotate={self.midi_rotate}"
         out += f")"
         return out
