@@ -4,7 +4,7 @@ import re
 import mido  # https://github.com/mido/mido, also run pip3 install python-rtmidi --install-option="--no-jack"
 import paho.mqtt.client as mqtt
 from Faderport.constants import *
-from Faderport.structure import FaderportControls
+from Faderport.structure import FaderportControlsMidi2MQTT, Button
 
 
 class Faderport(threading.Thread):
@@ -44,12 +44,12 @@ class Faderport(threading.Thread):
             midi_id = 'pitchwheel'
         else:
             return
-        # Callback if MIDI message in self.controls.topics_out
-        if msg.channel in self.controls.topics_out:
-            if midi_id in self.controls.topics_out[msg.channel]:
-                if msg.type in self.controls.topics_out[msg.channel][midi_id]:
-                    control_object = self.controls.topics_out[msg.channel][midi_id][msg.type][0]
-                    callback = self.controls.topics_out[msg.channel][midi_id][msg.type][1]
+        # Callback if MIDI message in self.controls.midi_triggers
+        if msg.channel in self.controls.midi_triggers:
+            if midi_id in self.controls.midi_triggers[msg.channel]:
+                if msg.type in self.controls.midi_triggers[msg.channel][midi_id]:
+                    control_object = self.controls.midi_triggers[msg.channel][midi_id][msg.type][0]
+                    callback = self.controls.midi_triggers[msg.channel][midi_id][msg.type][1]
                     callback(control_object, msg)
 
     def run(self):
@@ -57,9 +57,9 @@ class Faderport(threading.Thread):
         self.mqtt_client = mqtt.Client()
         self.mqtt_client.on_connect = self._mqtt_on_connected
         self.mqtt_client.on_message = self._mqtt_on_message
+        self.controls = FaderportControlsMidi2MQTT(faderport=self)
         self.mqtt_client.connect(host="127.0.0.1")
         self.mqtt_client.loop_start()
-        self.controls = FaderportControls(faderport=self)
         while True:
             if self.quit:
                 self.mqtt_client.loop_stop()
@@ -84,21 +84,20 @@ class Faderport(threading.Thread):
                 self.midi_parse(msg)
             sleep(0.001)
 
-    @staticmethod
-    def _mqtt_on_connected(client, userdata, flags, rc):
+    def _mqtt_on_connected(self, client, userdata, flags, rc):
         print(f"MQTT Connected with result code {rc}")
-        client.subscribe("faderport/#")
+        client.subscribe(f"{self.controls.mqtt_prefix}/#")
 
     def _mqtt_on_message(self, client, userdata, msg):
         # print(f"MQTT {msg.topic} {msg.payload}")
         topics = msg.topic.split("/")
         # Ex. topic faderport/left_play/event/down
         if len(topics) >= 3:
-            # Set topics_in[btn.name]["set_light"] = set_light_callback
-            if topics[1] in self.controls.topics_in:
-                if topics[2] in self.controls.topics_in[topics[1]]:
-                    control_object = self.controls.topics_in[topics[1]][topics[2]][0]
-                    callback = self.controls.topics_in[topics[1]][topics[2]][1]
+            # Set mqtt_topics_in[btn.name]["set_light"] = set_light_callback
+            if topics[1] in self.controls.mqtt_topics_in:
+                if topics[2] in self.controls.mqtt_topics_in[topics[1]]:
+                    control_object = self.controls.mqtt_topics_in[topics[1]][topics[2]][0]
+                    callback = self.controls.mqtt_topics_in[topics[1]][topics[2]][1]
                     callback(topics, control_object, msg)
 
     def __repr__(self):
@@ -144,6 +143,18 @@ class Faderport(threading.Thread):
         """
         m = mido.Message('pitchwheel', channel=channel, pitch=pitch_value)
         self.midi_user.send(m)
+
+    def button_set_color(self, button: Button, color_to_set):
+        if type(color_to_set) is tuple:
+            # Convert to 7-bit RGB color
+            self.send_note_on(channel=button.channel + 1, note=button.midi_id, velocity=color_to_set[0] >> 1)
+            self.send_note_on(channel=button.channel + 2, note=button.midi_id, velocity=color_to_set[1] >> 1)
+            self.send_note_on(channel=button.channel + 3, note=button.midi_id, velocity=color_to_set[2] >> 1)
+        else:
+            if button.midi_type == MIDIType.ControlChange:
+                self.send_control_change(channel=button.channel, control=button.midi_id, value=color_to_set)
+            else:
+                self.send_note_on(channel=button.channel, note=button.midi_id, velocity=color_to_set)
 
     def send_faderport_sysex(self, d: list):
         """
@@ -194,7 +205,9 @@ if __name__ == '__main__':
                         help='Lists available MIDI IO ports.')
     args = parser.parse_args()
 
-    print("Faderport 8")
+    title_short = "Faderport MIDI"
+    title_long = "Faderport 8 MIDI to MQTT"
+    print(title_long)
     if args.printports:
         print("MIDI IO ports:")
         io_ports = mido.get_ioport_names()
@@ -209,11 +222,11 @@ if __name__ == '__main__':
         if args.shell:
             from pysh.shell import Pysh  # https://github.com/TimGremalm/pysh
 
-            banner = ['Faderport8 Shell',
+            banner = [f"{title_long} Shell",
                       'You may leave this shell by typing `exit`, `q` or pressing Ctrl+D',
                       'faderport is the main object.']
             Pysh(dict_to_include={'faderport': faderport},
-                 prompt="Faderport$ ",
+                 prompt=f"{title_short}$ ",
                  banner=banner)
         else:
             run = True
