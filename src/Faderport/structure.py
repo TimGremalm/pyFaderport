@@ -150,7 +150,7 @@ class PitchWheel:
         if pitch_to_set < -8192 or pitch_to_set > 8191:
             raise Exception(f"Pitch {pitch_to_set} must be in range of -8192 to 8191.")
         if self.pitch == pitch_to_set:
-            print(f"Pitch {pitch_to_set} is already set for {self.name}.")
+            # print(f"Pitch {pitch_to_set} is already set for {self.name}.")
             return
         # Send command
         self.callback_pitchwheel_set_pitch(channel=self.pitchwheel_channel, pitch_value=pitch_to_set)
