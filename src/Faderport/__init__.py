@@ -1,3 +1,4 @@
+import platform
 import threading
 from time import sleep
 import re
@@ -8,7 +9,8 @@ from Faderport.structure import FaderportControlsMidi2MQTT, Button
 
 
 class Faderport(threading.Thread):
-    def __init__(self, port_user: str = "", print_midi: bool = False, test_mode: bool = False):
+    def __init__(self, port_user_in: str = "", port_user_out: str = "",
+                 print_midi: bool = False, test_mode: bool = False):
         """
         Init a Faderport object and prepare MIDI-connections.
         :type test_mode: Test-mode write control-values back so buttons light up.
@@ -22,11 +24,18 @@ class Faderport(threading.Thread):
         self.test_mode = test_mode
 
         # Find port names
-        self._ports_midi = mido.get_ioport_names()
-        self.port_user = self._find_port(port_user, "PreSonus.*FP8")
+        self._ports_midi_in = mido.get_input_names()
+        self._ports_midi_out = mido.get_output_names()
+        if platform.system() == "Windows":
+            self.port_user_in = self._find_port(port_user_in, "PreSonus.*0", direction_in=True)
+            self.port_user_out = self._find_port(port_user_out, "PreSonus.*1", direction_in=False)
+        else:
+            self.port_user_in = self._find_port(port_user_in, "PreSonus.*FP8", direction_in=True)
+            self.port_user_out = self._find_port(port_user_out, "PreSonus.*FP8", direction_in=False)
 
         # Instantiate variables
-        self.midi_user = None
+        self.midi_user_in = None
+        self.midi_user_out = None
         self.mqtt_client = None
         self.controls = None
         threading.Thread.__init__(self)
@@ -53,7 +62,8 @@ class Faderport(threading.Thread):
                     callback(control_object, msg)
 
     def run(self):
-        self.midi_user = mido.open_ioport(self.port_user)
+        self.midi_user_in = mido.open_input(self.port_user_in)
+        self.midi_user_out = mido.open_output(self.port_user_out)
         self.mqtt_client = mqtt.Client()
         self.mqtt_client.on_connect = self._mqtt_on_connected
         self.mqtt_client.on_message = self._mqtt_on_message
@@ -64,7 +74,7 @@ class Faderport(threading.Thread):
             if self.quit:
                 self.mqtt_client.loop_stop()
                 return
-            msg = self.midi_user.receive(False)
+            msg = self.midi_user_in.receive(False)
             if msg:
                 if self.test_mode:
                     if msg.type == 'note_on':
@@ -102,7 +112,8 @@ class Faderport(threading.Thread):
 
     def __repr__(self):
         out = f"Faderport"
-        out += f"\n\t{self.midi_user}"
+        out += f"\n\t{self.midi_user_in}"
+        out += f"\n\t{self.midi_user_out}"
         return out
 
     def send_control_change(self, channel: int, control: int, value: int):
@@ -113,7 +124,7 @@ class Faderport(threading.Thread):
         :param value: int Value 0-127
         """
         m = mido.Message('control_change', channel=channel, control=control, value=value)
-        self.midi_user.send(m)
+        self.midi_user_out.send(m)
 
     def send_note_on(self, channel: int, note: int, velocity: int):
         """
@@ -123,7 +134,7 @@ class Faderport(threading.Thread):
         :param velocity: int Velocity 0-127
         """
         m = mido.Message('note_on', channel=channel, note=note, velocity=velocity)
-        self.midi_user.send(m)
+        self.midi_user_out.send(m)
 
     def send_note_off(self, channel: int, note: int, velocity: int):
         """
@@ -133,7 +144,7 @@ class Faderport(threading.Thread):
         :param velocity: int Velocity 0-127
         """
         m = mido.Message('note_off', channel=channel, note=note, velocity=velocity)
-        self.midi_user.send(m)
+        self.midi_user_out.send(m)
 
     def send_pitch_wheel(self, channel: int, pitch_value: int):
         """
@@ -142,7 +153,7 @@ class Faderport(threading.Thread):
         :param pitch_value: int Note 0-127
         """
         m = mido.Message('pitchwheel', channel=channel, pitch=pitch_value)
-        self.midi_user.send(m)
+        self.midi_user_out.send(m)
 
     def button_set_color(self, button: Button, color_to_set):
         if type(color_to_set) is tuple:
@@ -164,9 +175,9 @@ class Faderport(threading.Thread):
         m = mido.Message('sysex')
         # Prefix Manufacturer and Product ID before the message. Mido will prefix sysex-command (240) and suffix (247).
         m.data = SYSEX_PREFIX_FADERPORT + d
-        self.midi_user.send(m)
+        self.midi_user_out.send(m)
 
-    def _find_port(self, port_name: str, fallback: str) -> str:
+    def _find_port(self, port_name: str, fallback: str, direction_in: bool = True) -> str:
         if port_name:
             port_name_to_search = port_name
         else:
@@ -176,7 +187,10 @@ class Faderport(threading.Thread):
         if not port_name_to_search.endswith(".*"):
             port_name_to_search += ".*"
         r = re.compile(port_name_to_search, re.IGNORECASE)
-        port_matches = list(filter(r.match, self._ports_midi))
+        if direction_in:
+            port_matches = list(filter(r.match, self._ports_midi_in))
+        else:
+            port_matches = list(filter(r.match, self._ports_midi_out))
         found_port = next(iter(port_matches), None)
         if found_port:
             return found_port
@@ -190,9 +204,13 @@ if __name__ == '__main__':
     parser.add_argument('--printmidi', '-p',
                         action='store_true',
                         help="Shows MIDI-messages in the console.")
-    parser.add_argument('--midiportuser', "--user",
+    parser.add_argument('--midiportuserin', "--userin",
                         type=str, default="",
-                        help="Set MIDI IO-port for Faderport Port User. "
+                        help="Set MIDI in-port for Faderport Port User. "
+                             "Default: PreSonus FP8:PreSonus FP8 MIDI 1 16:0")
+    parser.add_argument('--midiportuserout', "--userout",
+                        type=str, default="",
+                        help="Set MIDI out-port for Faderport Port User. "
                              "Default: PreSonus FP8:PreSonus FP8 MIDI 1 16:0")
     parser.add_argument('--shell', '-s',
                         action='store_true',
@@ -209,14 +227,19 @@ if __name__ == '__main__':
     title_long = "Faderport 8 MIDI to MQTT"
     print(title_long)
     if args.printports:
-        print("MIDI IO ports:")
-        io_ports = mido.get_ioport_names()
-        for port in io_ports:
+        print("MIDI In ports:")
+        ports_input = mido.get_input_names()
+        for port in ports_input:
+            print(f"\t{port}")
+        print("MIDI Out ports:")
+        ports_output = mido.get_output_names()
+        for port in ports_output:
             print(f"\t{port}")
         print("exit...")
     else:
         faderport = Faderport(print_midi=args.printmidi,
-                              port_user=args.midiportuser,
+                              port_user_in=args.midiportuserin,
+                              port_user_out=args.midiportuserout,
                               test_mode=args.test)
         faderport.start()
         if args.shell:
